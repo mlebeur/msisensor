@@ -182,31 +182,58 @@ void HomoSite::DisGenotyping(Sample &sample) {
     reportSomatic = reportGermline = false;
     // update all 
     normalCov = tumorCov = 0;
+
+    ///////////////
+    bool firstChangeOfMaxValueTumoral = 1;
+    bool onlyOneValueInTumoral = 0;
+    bool maxValueForTumoral = 0;
+    bool maxValueForNormal = 0;
+    ///////////////
+    
     for (unsigned int j=0; j<polyscan.totalBamPairsNum; j++) {
         for (unsigned int k=0; k<paramd.s_dispots; k++) {
             normalCov += normalDis[j][k];
             tumorCov  += tumorDis[j][k];
+            if(maxValueForTumoral < tumorDis[j][k]){
+                maxValueForTumoral = tumorDis[j][k];
+                if(firstChangeOfMaxValueTumoral){
+                    onlyOneValueInTumoral = 1;
+                    firstChangeOfMaxValueTumoral = 0;
+                }else{
+                    onlyOneValueInTumoral = 0;
+                }
+            }
+            if(maxValueForNormal < normalDis[j][k]){
+                maxValueForNormal = normalDis[j][k];
+            }
         }
     }
 
     normalWithSufCov = (normalCov >= paramd.covCutoff) ? true : false;
     
-    if ( normalWithSufCov && (tumorCov >= paramd.covCutoff) ) {
+    //if enough coverage in both normal and tumoral counts tables
+    if ( normalWithSufCov && (tumorCov >= paramd.covCutoff)){
        withSufCov = true;
-       dif = DistanceBetweenTwo( normalDis[0], tumorDis[0] );
-       pValue = X2BetweenTwo( normalDis[0], tumorDis[0], param.s_dispots );
-       // if (pValue < 0.001) somatic = true;
-       // add one for FDR
-       somatic = true;
-
+       //And if not in the case where only one value for the tumoral which is the same for normal (ex : N = (4, 50, 1) , T = (0, 80, 0)) leeds to chisq pvalue < 0.05)
+       if(onlyOneValueInTumoral && (onlyOneValueInTumoral == maxValueForTumoral)) {
+          dif = -1.0;
+          pValue = 1;
+       } else{
+          dif = DistanceBetweenTwo( normalDis[0], tumorDis[0] );
+          pValue = X2BetweenTwo( normalDis[0], tumorDis[0], param.s_dispots );
+          // if (pValue < 0.001) somatic = true;
+          // add one for FDR
+          somatic = true;
+       }
     } else {
-
         withSufCov = false;
         dif = -1.0;
         pValue = 1;
     }
     // compute genotype
-    ComputeGenotype( normalDis[0] );
+    if ( normalWithSufCov){
+        ComputeGenotype( normalDis[0] );
+    }
     ///////////////////////////////////
     unsigned PairIndex = 0;
     if ( withSufCov  ) {
@@ -215,7 +242,7 @@ void HomoSite::DisGenotyping(Sample &sample) {
         //if ( somatic ) sample.numberOfMsiDataPoints++;
     }
 
-    if ( withSufCov && withGenotype ) reportGermline = true;
+    if ( withSufCov ) reportGermline = true;
     if ( somatic ) reportSomatic = true;
 
     if ( reportSomatic ) {
@@ -329,7 +356,7 @@ double HomoSite::DistanceBetweenTwo( unsigned short * FirstOriginal, unsigned sh
 
 void HomoSite::ComputeGenotype( unsigned short * NormalReadCount ) {
     unsigned int Offset, CoverageCutoff, first, second, Sum;
-    Offset = 1; CoverageCutoff = param.covCutoff;
+    Offset = 1; CoverageCutoff = paramd.covCutoff;
     first = second = Sum = 0;
 
     // find the largest number 
@@ -339,11 +366,11 @@ void HomoSite::ComputeGenotype( unsigned short * NormalReadCount ) {
         if (NormalReadCount[pos_index] > NormalReadCount[first]) first = pos_index;
     }
 
-    if (Sum < CoverageCutoff) {
-        genotype[0] = genotype[1] = -1;
-        withGenotype = false;
-        return;
-    }
+//    if (Sum < CoverageCutoff) {
+//        genotype[0] = genotype[1] = -1;
+//        withGenotype = false;
+//        return;
+//    }
 
     if (first == 0) second = 1;
     for (unsigned int pos_index = 0; pos_index < param.s_dispots; pos_index++) {
