@@ -215,7 +215,7 @@ void HomoSite::DisGenotyping(Sample &sample) {
         //if ( somatic ) sample.numberOfMsiDataPoints++;
     }
 
-    if ( withGenotype ) reportGermline = true;
+    if ( withSufCov && withGenotype ) reportGermline = true;
     if ( somatic ) reportSomatic = true;
 
     if ( reportSomatic ) {
