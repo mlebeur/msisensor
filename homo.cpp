@@ -196,6 +196,8 @@ void HomoSite::DisGenotyping(Sample &sample) {
             tumorCov  += tumorDis[j][k];
             if(maxValueForTumoral < tumorDis[j][k]){
                 maxValueForTumoral = tumorDis[j][k];
+            }
+            if(tumorDis[j][k]>0){
                 if(firstChangeOfMaxValueTumoral){
                     onlyOneValueInTumoral = 1;
                     firstChangeOfMaxValueTumoral = 0;
@@ -211,11 +213,11 @@ void HomoSite::DisGenotyping(Sample &sample) {
 
     normalWithSufCov = (normalCov >= paramd.covCutoff) ? true : false;
     
-    //if enough coverage in both normal and tumoral counts tables
+    //if enough coverage in both normal and tumoral count tables
     if ( normalWithSufCov && (tumorCov >= paramd.covCutoff)){
        withSufCov = true;
        //And if not in the case where only one value for the tumoral which is the same for normal (ex : N = (4, 50, 1) , T = (0, 80, 0)) leeds to chisq pvalue < 0.05)
-       if(onlyOneValueInTumoral && (onlyOneValueInTumoral == maxValueForTumoral)) {
+       if(onlyOneValueInTumoral && (maxValueForNormal == maxValueForTumoral)) {
           dif = -1.0;
           pValue = 1;
        } else{
@@ -225,7 +227,7 @@ void HomoSite::DisGenotyping(Sample &sample) {
           // add one for FDR
           somatic = true;
        }
-    } else {
+    }else {
         withSufCov = false;
         dif = -1.0;
         pValue = 1;
