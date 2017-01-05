@@ -46,27 +46,21 @@ public:
     ~HomoSite();
     // length of homo
     bit8_t  typeLen;
-    // homo or microsate 
-    // A/C/G/T/AC/AGC
+
     bit16_t homoType;
     bit16_t length;
     bit16_t frontKmer;
     bit16_t endKmer;
     
     std::string chr;
-    // readable
     std::string transfer;
-
     std::string bases;
     std::string fbases;
     std::string ebases;
 
     // location
     int location;
-    // added low and high cutoff
-    // for filtering the reads
-    // without the window
-    //
+    // added low and high cutoff for filtering the reads without the window
     int lowcut;
     int highcut; 
 
@@ -74,7 +68,7 @@ public:
     unsigned short **normalDis;
     unsigned short **tumorDis;
 
-    ////// genotyping //////
+    // genotyping
     unsigned normalCov;
     unsigned tumorCov;
     bool withSufCov;
@@ -84,22 +78,31 @@ public:
     double dif;
     double pValue;
     int genotype[2];
-    ////////////////////////
 
     inline void InitType(){ genotype[0] = genotype[1] = -2; };
 
+    // Transfer binary to string
     void TransferString();
+    
+    // Distribution initialization
     void InitialDis();
+    // Distribution printing
     void OutputDis();
-    void ReleaseMemory();
-    //void PouroutDis(std::ofstream &fout);
+    // Distribution all printing
     void PouroutDis(Sample &sample);
+    
+    // Genotyping analyis
     void DisGenotyping(Sample &sample);
-    //// genotyping ///
-    void BoolsInitial();
+    // Compute the distance between normal and tumoral distribution
     double DistanceBetweenTwo(unsigned short * FirstOriginal, unsigned short * SecondOriginal);
+    // Compute genotype based on distribution peaks
     void ComputeGenotype( unsigned short * NormalReadCount );
 
+    // Bool initialization
+    void BoolsInitial();
+    // Memory releasing
+    void ReleaseMemory();
+    
     protected:
         // xxx
 };

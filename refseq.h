@@ -40,6 +40,8 @@
 #include "homo.h"
 #include "bamreader.h"
 
+
+
 // reference sequence information
 struct RefTitle {
     RefTitle()
@@ -52,6 +54,7 @@ struct RefTitle {
     bit32_t _size;
 };
 
+// RefSeq represent all the metadata outcoming from scanning a reference fasta file
 class RefSeq
 {
     public:
@@ -59,22 +62,18 @@ class RefSeq
         RefSeq();
         ~RefSeq();
         
-        // for input sequences
-        // number of sequence
+        // number of input sequence
         int total_num;
-        // number of windows
+        // number of compute windows
         int totalWindows;
 
-        // ---------------------------
-        // 
         // number of homopolymer sites
         int totalHomosites;
         // number of microsate sites
         int totalMicrosates; 
         // number of total sites
         int totalSites;
-        // ----------------------------
-        // 
+
         //total length of all sequences
         bit64_t sum_length;
 
@@ -86,22 +85,29 @@ class RefSeq
 
         bool ifUserDefinedRegion;
 
-        // scan homopolymers and microsates
+        // Scan homosites and windows foreach reference sequence
         void ScanHomoAndMicrosate(std::ifstream &fin);
+        // Scanning one reference sequence to find homopolymer/microsat
         void DoScan(int length, const std::string &name, unsigned int index);
-        // pour out from buffer
+        
+        // Print output header
         bool PouroutHeader(std::ofstream &fout);
-        // output header
+        
+        // Print output and clear buffer
         bool PouroutBuffer(std::ofstream &fout);
 
-        // load one site into buffer
+        // redable testing sites function (not binary) NOT USED
         void TestSites();
+        // testing sites binary function NOT USED
         void TestSitesBinary();
 
-        bit8_t LoadOneSite(const std::string & chr, const std::string & seq, int loc, bit8_t hLen, bit16_t type, bit16_t len, HomoSite & oneSite); 
+        // Instanciate one homo/microsate
+        bit8_t LoadOneSite(const std::string & chr, const std::string & seq, int loc, bit8_t hLen, bit16_t type, bit16_t len, HomoSite & oneSite);
+        
+        // Load next sequence
         ref_loc_t LoadNextSeq(std::ifstream &fin);
 
-        void UnmaskRegion();
+        //void UnmaskRegion();
 
 protected:
 

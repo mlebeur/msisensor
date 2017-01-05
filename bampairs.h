@@ -43,7 +43,7 @@ public:
     BamPairs();
     ~BamPairs();
     // total pairs
-    unsigned int totalParis;
+    unsigned int totalPairs;
     // bam files
     std::string normal_bam;
     std::string tumor_bam;

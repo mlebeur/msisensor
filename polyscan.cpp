@@ -35,7 +35,9 @@
 #include "bamreader.h"
 #include "param.h"
 
+//Define global parameters
 extern Param paramd;
+
 extern bit8_t alphabet[];
 extern bit8_t rev_alphabet[];
 extern char uhomo_code[];
@@ -50,7 +52,7 @@ PolyScan::~PolyScan() {
     totalSites.clear();
 }
 
-// eliminates a character from the input string
+// Eliminates a character from the input string
 void PolyScan::eliminate(const char ch, std::string & str){
     size_t eliminateCharPos = str.find(ch);
     while (eliminateCharPos != std::string::npos) {
@@ -67,7 +69,7 @@ bool PolyScan::ParseOneRegion(const std::string & regionString) {
     bool m_startDefined = false;
     int m_start = -1;
     int m_end   = -1;
-    std::string m_targetChromosomeName;
+    std::string m_targetChromosomeName;// Parse one region 
     // found a separator
     if (separatorPos != std::string::npos) {
         m_targetChromosomeName = regionString.substr(0, separatorPos);
@@ -115,11 +117,6 @@ void PolyScan::LoadBeds(std::ifstream &fin) {
         linestream >> chr;
         linestream >> start;
         linestream >> stop;
-        /*
-        std::cout<< chr <<"\t"
-                 << start <<"\t"
-                 << stop << "\n";
-        */
         if (chr == tempChr) {
             BedRegion tempBedRegion;
             tempBedRegion.start = start;
@@ -143,8 +140,7 @@ void PolyScan::LoadBeds(std::ifstream &fin) {
     } 
 }
 
-// loading bam list
-// only load one bam file
+// Load bam files
 void PolyScan::LoadBams(const std::string &bam1, const std::string &bam2) {
     BamPairs t_bampair;
     t_bampair.sName = "sample_name";
@@ -161,7 +157,7 @@ void PolyScan::LoadBams(const std::string &bam1, const std::string &bam2) {
     totalBamPairsNum++;
 }
 
-// read and load sites
+// Read and load sites
 void PolyScan::LoadHomosAndMicrosates(std::ifstream &fin) {
     std::string chr;
     std::string bases;
@@ -170,7 +166,6 @@ void PolyScan::LoadHomosAndMicrosates(std::ifstream &fin) {
     std::string line;
     std::string tChr = "";
     // count total loading sites
-    //
     totalHomosites = 0;
     int loc;
     bit8_t  siteLength;
@@ -196,7 +191,6 @@ void PolyScan::LoadHomosAndMicrosates(std::ifstream &fin) {
         linestream >> siteRepeats;
         linestream >> frontF;
         linestream >> tailF;
-        //xxx
         linestream >> bases;
         linestream >> fbases;
         linestream >> ebases;
@@ -244,7 +238,6 @@ void PolyScan::LoadHomosAndMicrosates(std::ifstream &fin) {
         }
 
         // load sites 
-        //HomoSite *toneSite = new HomoSite;
         HomoSite toneSite;
         toneSite.chr = chr;
         toneSite.location = loc;
@@ -265,17 +258,15 @@ void PolyScan::LoadHomosAndMicrosates(std::ifstream &fin) {
 
         linestream.clear();
         linestream.str("");
-
-    } // end while
-
+    }
 }
 
-// bed regions ?
+// bed regions ? NOT USED
 void PolyScan::BedFilterorNot() {
     if (beds.size() > 0) ifUserDefinedBed = true;
 }
 
-// test sites loading
+// testing sites loading NOTUSED
 void PolyScan::TestHomos() {
     for (unsigned long i=0; i<totalHomosites; i++) {
         HomoSite *toneSite = &totalSites[i];
@@ -290,7 +281,7 @@ void PolyScan::TestHomos() {
     }
 }
 
-// split windows
+// Compute windows from homopolymer and microsat distribution on genome
 void PolyScan::SplitWindows() {
     Window oneW;
     HomoSite *second;
@@ -328,7 +319,7 @@ void PolyScan::SplitWindows() {
     totalWindowsNum++;
 }
 
-// test windows
+// testing windows NOT USED
 void PolyScan::TestWindows() {
     Window *oneW;
     for (int i=0; i< totalWindowsNum; i++) {
@@ -343,29 +334,28 @@ void PolyScan::TestWindows() {
     }
 }
 
-// initial distribution
+// Distribution initialization
 void PolyScan::InithializeDistributions() {
     for (int i=0; i< totalWindowsNum; i++) {
         totalWindows[i].InitialDisW();
     }
 }
 
-// release distribution
+// Distribution releasing
 void PolyScan::releaseDistributions() {
     for (int i=0; i< totalWindowsNum; i++) {
         totalWindows[i].ClearDis();
     }
 }
 
-// output distribution
+// Distribution printing
 void PolyScan::outputDistributions() {
     for (int i=0; i< totalWindowsNum; i++) {
         totalWindows[i].OutputDisW();
     }
 }
 
-// get distribution 
-//void PolyScan::GetHomoDistribution( std::ofstream &fout ) {
+// Compute read count tables (distribution) foreach window 
 void PolyScan::GetHomoDistribution( Sample &oneSample, const std::string &prefix ) {
     oneSample.iniOutput(prefix);
     std::vector< SPLIT_READ > readsInWindow;

@@ -33,12 +33,15 @@
 #include "param.h"
 #include "polyscan.h"
 
+// Get back global parameter
 extern Param paramd;
+
 extern PolyScan polyscan;
 extern char homo_code[];
 extern char uhomo_code[];
 extern bit8_t alphabet[];
 
+//Genomic Window instanciation
 Window::Window() 
     : _start(0)
     , _end(0)
@@ -55,6 +58,7 @@ Window::~Window() {
     //xxx
 };
 
+//Initialize read count tables for each homopolymer of the genomic window
 void Window::InitialDisW() {
     HomoSite *p = NULL;
     for (unsigned short i=0; i<_siteCount; i++) {
@@ -63,6 +67,7 @@ void Window::InitialDisW() {
     }
 };
 
+//Release read count tables for each homopolymer of the genomic window
 void Window::ClearDis() {
     HomoSite *p = NULL;
     for (unsigned short i=0; i<_siteCount; i++) {
@@ -71,6 +76,7 @@ void Window::ClearDis() {
     }
 };
 
+//Print read count tables for each homopolymer of the genomic window
 void Window::OutputDisW() {
     HomoSite *p = NULL;
     for (unsigned short i=0; i<_siteCount; i++) {
@@ -79,6 +85,7 @@ void Window::OutputDisW() {
     }
 };
 
+//Print read count tables for a sampling of homopolymer of the genomic window
 void Window::PouroutDisW(Sample &oneSample) {
     HomoSite *p = NULL;
     for (unsigned short i=0; i<_siteCount; i++) {
@@ -87,6 +94,7 @@ void Window::PouroutDisW(Sample &oneSample) {
     }
 };
 
+//Genotyping and printing read count tables for a sampling of homopolymer of the genomic window
 void Window::DisGenotypingW(Sample &oneSample) {
     HomoSite *p = NULL;
     for (unsigned short i=0; i<_siteCount; i++) {
@@ -95,25 +103,24 @@ void Window::DisGenotypingW(Sample &oneSample) {
     }
 };
 
-// change start
+//Change window start
 void Window::ChangeStart() {
     if ((_start - MAX_SPAN_SIZE) < 0) {
         _start = 0;
     } else { _start -= MAX_SPAN_SIZE; }
 }
 
+//Compute read count tables for all reads in the window
 void Window::GetDistribution(std::vector <SPLIT_READ> &readsInWindow) {
     for (unsigned short j=0; j<polyscan.totalBamPairsNum; j++) {
         // normal
         if (!polyscan.totalBamPairs[j].normal_bam.empty()) {
-            // extract reads
             LoadReads(readsInWindow, polyscan.totalBamPairs[j].normal_bam.c_str());
             ScanReads(readsInWindow, j, false);
             readsInWindow.clear();
         }
         // tumor
         if (!polyscan.totalBamPairs[j].tumor_bam.empty()) {
-            // extract reads
             LoadReads(readsInWindow, polyscan.totalBamPairs[j].tumor_bam.c_str());
             ScanReads(readsInWindow, j, true);
             readsInWindow.clear();
@@ -121,8 +128,8 @@ void Window::GetDistribution(std::vector <SPLIT_READ> &readsInWindow) {
     }
 }
 
-void Window::LoadReads( std::vector <SPLIT_READ> &readsInWindow, 
-                        const std::string bam ) {
+//Extract reads from bam
+void Window::LoadReads( std::vector <SPLIT_READ> &readsInWindow, const std::string bam ) {
     std::string tag = "";
     if (!bam.empty()) {
         // extract reads
@@ -130,10 +137,8 @@ void Window::LoadReads( std::vector <SPLIT_READ> &readsInWindow,
     }
 }
 
-void Window::ScanReads( const std::vector <SPLIT_READ> &readsInWindow, 
-                        unsigned short bamIndex, 
-                        bool isTumor) {
-
+//Scan the extracted reads to compute count tables
+void Window::ScanReads( const std::vector <SPLIT_READ> &readsInWindow, unsigned short bamIndex, bool isTumor) {
     // openmp parallel 
     omp_set_num_threads( paramd.numberThreads );
 #pragma omp parallel for
@@ -170,6 +175,7 @@ void Window::ScanReads( const std::vector <SPLIT_READ> &readsInWindow,
     }
 }
 
+//Compute count tables for 1 read
 unsigned short Window::DoOneRead( const std::string &oneRead, const HomoSite *p ) {
     std::string::size_type startPos = 0;
     unsigned short count = 0;
@@ -198,7 +204,7 @@ unsigned short Window::DoOneRead( const std::string &oneRead, const HomoSite *p 
     return 0;
 }
 
-// reverse complement string
+// Reverse complement a sequence
 void Window::ReverseComplement(std::string &theWord) {       
     char tempChar;
     unsigned int t_uint0;

@@ -1,6 +1,120 @@
 MSIsensor
 ===========
-MSIsensor is a C++ program for automatically detecting somatic and germline variants at microsatellite regions. It computes length distributions of microsatellites per site in paired tumor and normal sequence data, subsequently using these to statistically compare observed distributions in both samples. Comprehensive testing indicates MSIsensor is an efficient and effective tool for deriving MSI status from standard tumor-normal paired sequence data.
+MSIsensor is a C++ program for automatically detecting somatic variants at microsatellite regions. It computes length distributions of microsatellites per site in paired tumor and normal sequence data, subsequently using these to statistically compare observed distributions in both samples. Comprehensive testing indicates MSIsensor is an efficient and effective tool for deriving MSI status from standard tumor-normal paired sequence data.
+
+Introduction
+------------
+Microsatellites/SSR/STR are repeated short DNA motifs. But so much on the "mathematical" definitions :
+
+Motifs (pb)   |   Repetitions number   |   Homopolymer length (pb)   |   Source
+- | :-: | :-: | -:
+1-4 | / | / | [www.cancer.gov](https://www.cancer.gov/publications/dictionaries/cancer-terms?CdrID=285938)
+2-8 | 100 | / | [www.ncbi.nlm.nih.gov](https://www.ncbi.nlm.nih.gov/mesh?Db=mesh&Cmd=DetailsSearch&Term=%22Microsatellite+Repeats%22%5BMeSH+Terms%5D)
+2-5 | 5-50 | / | [https://en.wikipedia.org](https://en.wikipedia.org/wiki/Microsatellite)
+1-6 | / | 10 | [http://gbe.oxfordjournals.org](http://gbe.oxfordjournals.org/content/2/620.full)
+2-3 | 15-248 | / | [http://hgdownload.cse.ucsc.edu](http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/microsat.txt.gz)
+1-1991 | 1.8-17326.4 | / | [http://hgdownload.cse.ucsc.edu](http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/simpleRepeat.txt.gz)
+
+That's why, it can be really usefull to have a program able to detect all SSR present in a reference file according to the user definition.
+
+Why SSR are so interesting ? After all, they are just non-coding reapeats dispersed all along the genome.
+
+In fact the are intesting because the number of motif repetition can change due to [replication slippage](https://en.wikipedia.org/wiki/Replication_slippage).
+But these repeat number variability is restricted by the [DNA repair mechanisms](https://en.wikipedia.org/wiki/DNA_repair). 
+So if DNA repair mechanisms are defective then the repeat number variability should increase.
+
+Futhermore, many diseases are linked to DNA repair mechanism deficiency such as cancer.
+That's why, MicroSatellite Instability (MSI) was defined as an hypermutatbility revealing that DNA repair mechanism is not working normally.
+Today, clinicians are looking for MSI using multi-PCR targeting 5-10 loci (ex : [https://www.google.com/patents/US7951564](https://www.google.com/patents/US7951564)).
+
+But with personalized medicine incoming, we easily understand that the tomorow's challenge is to analyzed all the SSR present in Whole Exome Sequencing (WES) or RNA sequencing for each patient.
+
+In conclusion, looking for SSR lenght variability allows the detection of DNA repair mechanism deficiency in patients.
+
+PS : this information can help clinician for treatment guidance. For example, radiations treatment shouldn't be used on patient having already defective DNA repair mechanism, the immunotherapy seems to be a better solution.
+
+
+Glossary
+--------
+* SSR/STR/Microsatellites are repeated short DNA motifs.
+* MSI (MicroSatellite Instability) is an hypermutatbility revealing that DNA repair mechanism is not working normally.
+* N means normal/WT (tissue, condition, file, ...).
+* T means tumoral (tissue, condition, file, ...).
+* Germline refer to elements (here SSR) having same length distribution in both N and T conditions.
+* Somatic refer to elements (here SSR) having same length distribution in both N and T conditions.
+* WES refer to [Whole Exome Sequencing](http://www.g3journal.org/content/5/8/1543.full).
+
+Global mechanism
+----------------
+MSIsensor can :
+
+1. Detect all SRR in a reference fasta file using the user's definition (msisensor scan).
+
+To distinguish SSR (which are much more redondant all along the human genome) flanking regions must be extracted. For example :
+
+        Grep TTTTTTTTTT hg19.fa         →      > 500 000 results
+        Grep GTAGC (T)10 GGCTA hg19.fa  →      2 results
+  
+
+2. Compare all detected SSR between a normal BAM and tumoral BAM using their SSR length variability to identify SSR presenting MSI (msisensor msi).
+
+In other words we want to compare length distributions of microsatellites per site in paired tumor and normal sequence data.
+
+For a SSR I want to know if the numbers of repeats is the same between normal (N) and tumoral (T) DNA, so for each SSR we want a count table like that :
+
+chr1 1560250 156256 (T)n 7
+
+n | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | -:
+SSR | T | TT | TTT | TTTT | TTTTT | TTTTTT | TTTTTTT | TTTTTTTT
+N | 0 | 0 | 0 | 0 | 0 | 1 | 9 | 0 
+T | 0 | 1 | 8 | 7 | 1 | 0 | 0 | 0
+
+This count table mean that 1 read containing the sequence TTTTTT was found in the region \[1560250-delta : 156256+delta\] of the normal BAM. In the same way, 9 reads containing the sequence TTTTTTT.
+In the tumoral BAM 1 read containing TT, 8 reads containing TTT, 7 reads containing TTTT and 1 read containing TTTTT.
+
+With the count table it's possible to use a chisquare test. But some axioms must be satisfied to use this test. For example the line count sum must be greater than 20 (foreach line). So the upper example will be filtered because the SSR is not enough covered in both Normal and Tumoral conditions. Let see with another example :
+
+n | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | -:
+N | 0 | 0 | 0 | 0 | 0 | 0  | 20 | 0 
+T | 0 | 0 | 0 | 0 | 0 | 20 | 0  | 0
+
+This SSR is enough covered in both conditions, so the chisquare test can be performed. The corresponding p-value is 1.874e-09. This one is lower than 5% so we want to consider this SSR as somatic. But we are working with hundreds to thousands of data so a multiple correction test is needed. MSIsensor used benjamini hoechberg [FDR](https://en.wikipedia.org/wiki/False_discovery_rate).
+
+So all SSR are processed, all p-values are then corrected. Finally, all p-values lower than 5% will be write in somatic file. All enough covered SSR wille be write in covered file and all read count tables will be write in dis file. 
+
+Detailled mechanism
+-------------------
+
+
+
+Advices
+-------
+
+To me the best SSR definition is motif from 1 to 8 bp with at least 10 repeats. Fist because it incudes mostly all other definitions. 
+
+
+Results
+-------
+
+* Detection :
+
+Command dervied from adviced definition of SSR
+
+        msisensor scan -d hg19.fa -o hg19.fa.msisensor -l 10 -m 100000 -s 8 -r 10
+        
+Only 6 minutes running with 0.5G of memory to find more thant 1 million of SSR.
+        
+* Comparaison :
+
+Command dervied from adviced definition of SSR
+
+        msisensor msi -d hg19.fa.msisensor -n normal_sorted.bam -t tumor_sorted.bam -o output -f 0.05 -c 20 -p 10 -m 100 -s 5 -w 6 -l 10 -q 1 -b 1
+
+MSIsensor was tested on the MOSCATO essay. The results show that it really easy to distinguish patients having a MSI phenotype (verified by WET lab) from the others using only the percentage of MSI on the number of SSR enough covered.
+
+I used a threshold of X for MOSCATO essay. But during my analysis I have shown that the inter-individual variability of SSR length is relatively high (like we are waiting for non coding sequences). So I beg you to perform your own validation and to choose your own threshold according your data before to determine the future of patients.
 
 Usage
 -----
@@ -63,7 +177,7 @@ If you are using Fedora, CentOS or RHEL, you'll need these packages instead:
 
     sudo yum install git samtools-devel zlib-devel
 
-Download the samtools-0.1.19 from SOURCEFORGE (http://sourceforge.net/projects/samtools/files/samtools/0.1.19):
+Download the samtools-0.1.19 from [SOURCEFORGE](http://sourceforge.net/projects/samtools/files/samtools/0.1.19):
 
     tar jxf samtools-0.1.19.tar.bz2
     cd samtools-0.1.19
@@ -91,7 +205,7 @@ Example
 -------
 1. Scan microsatellites from reference genome:
   
-        msisensor scan -d referen.fa -o microsatellites.list
+        msisensor scan -d reference.fa -o microsatellites.list
 
 2. Msi scorring: 
 
@@ -102,11 +216,11 @@ Example
 Output
 -------
 There will be one microsatellite list output in "scan" step. Msi scorring step will give 4 output files based on given output prefix:
-        
-        output.prefix
-        output.prefix_dis
-        output.prefix_germline
-        output.prefix_somatic
+        microsatellites.list
+        output
+        output_dis
+        output_covered
+        output_somatic
 
 1. microsatellites.list: microsatellite list output ( columns with *_binary means: binary conversion of DNA bases based on A=00, C=01, G=10, and T=11 )
 
@@ -117,18 +231,27 @@ There will be one microsatellite list output in "scan" step. Msi scorring step w
         1       10658   2       9       3       546     409     GC      GAGAG   CGCGC
         1       10681   2       2       3       665     614     AG      GGCGC   GCGCG
 
-2. output.prefix: msi score output
+2. output: msi score output (Global result on individual)
 
-        Total_Number_of_Sites   Number_of_Somatic_Sites %
-        640     75      11.72
+        Enough covered SSR number     Somatic SSR number      Percentage of somatic SSR on enough covered SSR
+        640                                  75                       11.72
 
-3. output.prefix_dis: read count distribution (N: normal; T: tumor)
+3. output_dis: read count distribution according SSR length (N: normal; T: tumor)
 
         1 10529896 CTTTC 15[T] GAGAC
         N: 0 0 0 0 0 0 0 1 0 0 8 9 1 7 17 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
         T: 0 0 0 0 0 0 0 0 0 1 19 14 17 9 32 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
 
-4. output.prefix_somatic: somatic sites detected ( FDR: false discovery rate ) 
+4. output_covered: SSR having enough coverage (both germline and somatic)
+    
+        chromosome   location        left_flank     repeat_times    repeat_unit_bases    right_flank      genotype
+        1       1192105 AATAC   11      A       TTAGC   5|5
+        1       1330899 CTGCC   5       AG      CACAG   5|5
+        1       1598690 AATAC   12      A       TTAGC   5|5
+        1       1605407 AAAAG   14      A       GAAAA   1|1
+        1       2118724 TTTTC   11      T       CTTTT   1|1
+
+5. output_somatic: somatic sites detected ( FDR: False Discovery Rate using BH algorithm) 
 
         chromosome   location        left_flank     repeat_times    repeat_unit_bases    right_flank      difference      P_value    FDR     rank
         1       16200729        TAAGA   10      T       CTTGT   0.55652 2.8973e-15      1.8542e-12      1
@@ -141,18 +264,11 @@ There will be one microsatellite list output in "scan" step. Msi scorring step w
         1       33087567        TAGAG   16      A       GGAAA   0.53141 1e-14   8e-13   8
         1       41456808        CTAAC   14      T       CTTTT   0.76286 1e-14   7.1111e-13      9
 
-5. output.prefix_germline: germline sites detected
-    
-        chromosome   location        left_flank     repeat_times    repeat_unit_bases    right_flank      genotype
-        1       1192105 AATAC   11      A       TTAGC   5|5
-        1       1330899 CTGCC   5       AG      CACAG   5|5
-        1       1598690 AATAC   12      A       TTAGC   5|5
-        1       1605407 AAAAG   14      A       GAAAA   1|1
-        1       2118724 TTTTC   11      T       CTTTT   1|1
+
 
 
 Test sample
--------
+-----------
 We provided one small sized sample data (tumor and matched normal bam files) for user to try msi scoring step.
 It is very simple to run this test using sample data:
 
@@ -161,5 +277,25 @@ It is very simple to run this test using sample data:
 
 Contact
 -------
-Please contact Beifang Niu by bniu@genome.wustl.edu and Kai Ye by kye@genome.wustl.edu if you have any questions.
+Please contact Lebeurrier Manuel manuel.lebeurrier@gustaveroussy.fr if you have any questions.
+
+<Please contact Beifang Niu by bniu@genome.wustl.edu and Kai Ye by kye@genome.wustl.edu if you have any questions.>
+
+Authors
+-------
+
+Beifang Niu
+
+Kai Ye
+
+Lebeurrier Manuel
+
+
+Licence
+-------
+
+Until we choose a licence, please be advised that all rights are reserved.
+
+
+
 
