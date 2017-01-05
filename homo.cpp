@@ -34,11 +34,8 @@
 #include "polyscan.h"
 #include "somatic.h"
 
-//Define global parameters (default)
 extern Param param;
-//Define global parameters (user)
 extern Param paramd;
-
 extern PolyScan polyscan;
 extern char homo_code[];
 
@@ -58,6 +55,7 @@ HomoSite::HomoSite()
     , highcut(0)
     , normalDis(NULL)
     , tumorDis(NULL)
+    ////////////
     , normalCov( 0 )
     , tumorCov( 0 )
     , withSufCov( false )
@@ -74,8 +72,10 @@ HomoSite::~HomoSite() {
     // xxxxx
 };
 
-// Transfer binary to string
+// transfer binary to string
 void HomoSite::TransferString() {
+    // assign memory
+    //chr.resize(MAX_TRANSFER_LINE_LENGTH);
     std::stringstream ss;
     bit8_t tch = 0;
     char tchbuff[MAX_FLANK_REGION];
@@ -117,7 +117,7 @@ void HomoSite::TransferString() {
     ss.str("");
 }
 
-// Distribution initialization
+// initial distribution
 void HomoSite::InitialDis() {
     normalDis = new unsigned short *[polyscan.totalBamPairsNum];
     tumorDis  = new unsigned short *[polyscan.totalBamPairsNum];
@@ -131,7 +131,7 @@ void HomoSite::InitialDis() {
     }
 }
 
-// Distribution printing
+// Out distribution
 void HomoSite::OutputDis() {
     for (unsigned int j=0; j<polyscan.totalBamPairsNum; j++) {
         for (unsigned int k=0; k<paramd.s_dispots; k++) {
@@ -143,7 +143,7 @@ void HomoSite::OutputDis() {
     }
 }
 
-// Distribution all printing
+// Pourout distribution
 void HomoSite::PouroutDis(Sample &sample) {
     sample.outputDistribution << chr << " "
          << location << " "
@@ -165,32 +165,37 @@ void HomoSite::PouroutDis(Sample &sample) {
     sample.outputDistribution << "\n";
 }
 
-// Bool initialization
+// initial bools
 void HomoSite::BoolsInitial() {
     withSufCov = normalWithSufCov = somatic = withGenotype = false;
 }
 
-// Genotyping analyis
+// genotyping analyis
 void HomoSite::DisGenotyping(Sample &sample) {
+    /////// genotyping //////////
+    // BoolsInitial();
+    // Total sites
+    ////////////////////////////
     sample.numberOftotalSites++;
+    ///////////////////////////
     bool reportSomatic, reportGermline;
     reportSomatic = reportGermline = false;
+    // update all 
     normalCov = tumorCov = 0;
 
+    ///////////////
     bool firstChangeOfMaxValueTumoral = 1;
     bool onlyOneValueInTumoral = 0;
     bool maxValueForTumoral = 0;
     bool maxValueForNormal = 0;
-    bool maxCovForTumoral = 0;
-    bool maxCovForNormal = 0;
+    ///////////////
     
     for (unsigned int j=0; j<polyscan.totalBamPairsNum; j++) {
         for (unsigned int k=0; k<paramd.s_dispots; k++) {
             normalCov += normalDis[j][k];
             tumorCov  += tumorDis[j][k];
             if(maxValueForTumoral < tumorDis[j][k]){
-                maxCovForTumoral = tumorDis[j][k];
-                maxValueForTumoral = k;
+                maxValueForTumoral = tumorDis[j][k];
             }
             if(tumorDis[j][k]>0){
                 if(firstChangeOfMaxValueTumoral){
@@ -201,37 +206,60 @@ void HomoSite::DisGenotyping(Sample &sample) {
                 }
             }
             if(maxValueForNormal < normalDis[j][k]){
-                maxCovForNormal = normalDis[j][k];
-                maxValueForNormal = k;
+                maxValueForNormal = normalDis[j][k];
             }
         }
     }
+
     normalWithSufCov = (normalCov >= paramd.covCutoff) ? true : false;
     
     //if enough coverage in both normal and tumoral count tables
     if ( normalWithSufCov && (tumorCov >= paramd.covCutoff)){
        withSufCov = true;
        //And if not in the case where only one value for the tumoral which is the same for normal (ex : N = (4, 50, 1) , T = (0, 80, 0)) leeds to chisq pvalue < 0.05)
-       //But these cases muste be exclude N = (0, 50, 40) , T = (0, 80, 0)), because in this case one allele is lost
-       if(onlyOneValueInTumoral && (maxValueForNormal == maxValueForTumoral) && maxCovForNormal > (0.9 * normalCov)) {
+       if(onlyOneValueInTumoral && (maxValueForNormal == maxValueForTumoral)) {
           dif = -1.0;
           pValue = 1;
        } else{
           dif = DistanceBetweenTwo( normalDis[0], tumorDis[0] );
           pValue = X2BetweenTwo( normalDis[0], tumorDis[0], param.s_dispots );
+          // if (pValue < 0.001) somatic = true;
+          // add one for FDR
           somatic = true;
        }
-    } else{
+    }else {
         withSufCov = false;
         dif = -1.0;
         pValue = 1;
     }
-    if ( normalWithSufCov) ComputeGenotype( normalDis[0] );
-    if ( withSufCov ) sample.numberOfDataPoints++;
+    // compute genotype
+    if ( normalWithSufCov){
+        ComputeGenotype( normalDis[0] );
+    }
+    ///////////////////////////////////
+    unsigned PairIndex = 0;
+    if ( withSufCov  ) {
+        sample.numberOfDataPoints++;
+        //sample.outputPSomatic << log10( pValue ) << std::endl;
+        //if ( somatic ) sample.numberOfMsiDataPoints++;
+    }
+
     if ( withSufCov ) reportGermline = true;
     if ( somatic ) reportSomatic = true;
+
     if ( reportSomatic ) {
-        // record for FDR analysis instead of report it directly
+        /*
+        sample.outputSomatic << chr << "\t" 
+                             << location << "\t" 
+                             << fbases << "\t" 
+                             << length << "\t"
+                             << bases << "\t" 
+                             << ebases;
+        sample.outputSomatic << "\t" << std::fixed << dif << "\t"<< std::fixed << pValue;
+        sample.outputSomatic << std::endl;
+        */
+        // record for FDR analysis 
+        // instead of report it directly
         SomaticSite onessite;
         onessite.chr = chr;
         onessite.location = location;
@@ -241,8 +269,10 @@ void HomoSite::DisGenotyping(Sample &sample) {
         onessite.bases = bases;
         onessite.diff = dif;
         onessite.pValue = pValue;
+
         sample.totalSomaticSites.push_back( onessite );
     }
+
     if ( reportGermline ) {
         sample.outputGermline << chr << "\t" 
                               << location << "\t" 
@@ -256,7 +286,7 @@ void HomoSite::DisGenotyping(Sample &sample) {
 
 }
 
-// Compute the distance between normal and tumoral distribution
+// distance
 double HomoSite::DistanceBetweenTwo( unsigned short * FirstOriginal, unsigned short * SecondOriginal ) {
     double SmallDouble = 0.0000000001;
     // declare 
@@ -292,8 +322,8 @@ double HomoSite::DistanceBetweenTwo( unsigned short * FirstOriginal, unsigned sh
             Min[i] = SecondNormalized[i];
             Max[i] = FirstNormalized[i];
         }
-	    if (Min[i] < SmallDouble) Min[i] = 0.0;
-	    if (Max[i] < SmallDouble) Max[i] = 0.0;
+	if (Min[i] < SmallDouble) Min[i] = 0.0;
+	if (Max[i] < SmallDouble) Max[i] = 0.0;
     }
 
     // caculate area
@@ -304,18 +334,18 @@ double HomoSite::DistanceBetweenTwo( unsigned short * FirstOriginal, unsigned sh
     }
     if (AreaMax < AreaMin) {
 	std::cerr << "something is wrong with distance calculation " << AreaMax << " " << AreaMin << std::endl;
-    	for (unsigned index = 0; index < 100; index++) {
-	    	std::cerr << index << "\t" 
-                              << FirstOriginal[index] << "\t" 
-                              << SecondOriginal[index] << "\t" 
-                              << sumFirst << "\t" 
-                              << sumSecond << "\t" 
-                              << FirstNormalized[index] << "\t" 
-                              << SecondNormalized[index] << "\t" 
-                              << Min[index] << "\t" 
-                              << Max[index] 
-                              << std::endl;
-	    }
+	for (unsigned index = 0; index < 100; index++) {
+		std::cerr << index << "\t" 
+                          << FirstOriginal[index] << "\t" 
+                          << SecondOriginal[index] << "\t" 
+                          << sumFirst << "\t" 
+                          << sumSecond << "\t" 
+                          << FirstNormalized[index] << "\t" 
+                          << SecondNormalized[index] << "\t" 
+                          << Min[index] << "\t" 
+                          << Max[index] 
+                          << std::endl;
+	}
     }
     delete [] Min;
     delete [] Max;
@@ -326,7 +356,6 @@ double HomoSite::DistanceBetweenTwo( unsigned short * FirstOriginal, unsigned sh
     return (AreaMax - AreaMin)/AreaMax;
 }
 
-// Compute genotype based on distribution peaks
 void HomoSite::ComputeGenotype( unsigned short * NormalReadCount ) {
     unsigned int Offset, CoverageCutoff, first, second, Sum;
     Offset = 1; CoverageCutoff = paramd.covCutoff;
@@ -370,7 +399,7 @@ void HomoSite::ComputeGenotype( unsigned short * NormalReadCount ) {
     return;
 } 
 
-// Memory releasing
+// release memory
 void HomoSite::ReleaseMemory() {
     for (unsigned int k=0; k<polyscan.totalBamPairsNum; k++) {
         delete [] normalDis[k];

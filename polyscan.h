@@ -43,7 +43,6 @@
 #include "window.h"
 #include "sample.h"
 
-//PolyScan allows to read scan results and execute MSI detection for a sample 
 class PolyScan
 {
     public:
@@ -54,51 +53,41 @@ class PolyScan
         // user defined region
         UserDefinedRegion region_one;
         bool ifUserDefinedRegion;
-        // Eliminates a character from the input string
         void eliminate(const char ch, std::string & str);
-        // Parse one region 
         bool ParseOneRegion(const std::string &region);
 
         // read bed regions
         bool ifUserDefinedBed;
         std::map<std::string, bit16_t> chrMaptoIndex;
         std::vector< BedChr > beds;
-        // Loading bed regions
         void LoadBeds(std::ifstream &fin);
-        // bed regions ? NOT USED
         void BedFilterorNot();
 
         // load bam list file 
         std::vector< BamPairs > totalBamPairs;
-        // Load bam files
+        //void LoadBams(std::ifstream &fin);
         void LoadBams(const std::string &nBam, const std::string &tBam);
         unsigned int totalBamPairsNum;
 
         // load homos and microsatellites
         unsigned long totalHomosites; 
-        std::vector< HomoSite > totalSites;
-        // Read and load sites
+        //std::vector< HomoSite * > totalSites;
+        std::vector< HomoSite  > totalSites;
         void LoadHomosAndMicrosates(std::ifstream &fin);
-        // testing sites loading NOTUSED
         void TestHomos();
 
         std::vector< HomoSite > homosBuffer;
 
         // windows
         std::vector< Window > totalWindows;
-        // Compute windows from homopolymer and microsat distribution on genome
         void SplitWindows();
-        // testing windows NOT USED
         void TestWindows();
         unsigned long totalWindowsNum;
 
-        // Distribution initialization
+        // distribution 
         void InithializeDistributions();
-        // Distribution printing
         void outputDistributions();
-        // Distribution releasing
         void releaseDistributions(); 
-        // Compute read count tables (distribution) foreach window 
         void GetHomoDistribution( Sample &oneSample, const std::string &prefix );
         
 protected:

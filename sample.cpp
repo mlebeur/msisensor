@@ -32,12 +32,12 @@
 #include "sample.h"
 #include "param.h"
 
-// Get back global parameter
 extern Param paramd;
 
 Sample::Sample()
     : outputPrefix( "test" )
     , output( NULL )
+   //, outputPSomatic( NULL )
     , outputSomatic( NULL )
     , outputGermline( NULL )
     , outputDistribution( NULL )
@@ -50,6 +50,7 @@ Sample::Sample()
 {
     //xxxx
     output.precision( precisionNumS );
+   // outputPSomatic.precision( precisionNumL );
     outputSomatic.precision( precisionNumL );
     outputGermline.precision( precisionNumL );
     outputDistribution.precision( precisionNumL );
@@ -60,14 +61,13 @@ Sample::~Sample() {
     // xxxxx
 };
 
-// Open output files
 void Sample::iniOutput( const std::string &gavePrefix ) { 
     if ( !gavePrefix.empty()  ) { outputPrefix = gavePrefix; }
     // init pour out result files
     output.open( outputPrefix.c_str() );
    // outputPSomatic.open( (outputPrefix + "_p_somatic").c_str() );
     outputSomatic.open( (outputPrefix + "_somatic").c_str() );
-    outputGermline.open( (outputPrefix + "_covered").c_str() );
+    outputGermline.open( (outputPrefix + "_germline").c_str() );
     outputDistribution.open( (outputPrefix + "_dis").c_str() );
 
     //if ( !output || !outputPSomatic || !outputSomatic || !outputGermline || !outputDistribution ) {
@@ -77,16 +77,14 @@ void Sample::iniOutput( const std::string &gavePrefix ) {
     }
 }
 
-// Print result summary
 void Sample::pourOutMsiScore() {
-    output << "Enough covered SSR number\tSomatic SSR number\tPercentage of somatic SSR on enough covered SSR" << std::endl;
+    output << "Total_Number_of_Sites\tNumber_of_Somatic_Sites\t%" << std::endl;
     output << numberOfDataPoints << "\t" 
            << numberOfMsiDataPoints << "\t" 
            << std::fixed 
            << (numberOfMsiDataPoints / (double)numberOfDataPoints) * 100.0 << std::endl;
 }
 
-// Close output files
 void Sample::closeOutStream() {
     output.close();
     //outputPSomatic.close();
@@ -95,7 +93,7 @@ void Sample::closeOutStream() {
     outputDistribution.close();
 }
 
-// FDR computation
+// FDR determination
 void Sample::calculateFDR() {
     // sorting by p_value
     sort( totalSomaticSites.begin(), totalSomaticSites.end() );
@@ -116,7 +114,7 @@ void Sample::calculateFDR() {
     }
 }
 
-// Output somatics && FDR
+// report somatics && FDR
 void Sample::pourOutSomaticFDR() {
     for ( std::vector< SomaticSite >::iterator _it = totalSomaticSites.begin(); _it != totalSomaticSites.end(); ++_it ) {
         if ( ! _it->somatic ) continue;
@@ -133,7 +131,7 @@ void Sample::pourOutSomaticFDR() {
     }
 }
 
-// Verbose results summary
+// verbose 
 void Sample::VerboseInfo() {
     std::cerr << "\n*** Summary information ***\n\n"
               << "Number of total sites: " 

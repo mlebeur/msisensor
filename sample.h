@@ -43,8 +43,8 @@ public:
     Sample();
     ~Sample();
 
-    //Output files
     std::string outputPrefix;
+
     std::ofstream output;
     //std::ofstream outputPSomatic;
     std::ofstream outputSomatic;
@@ -63,22 +63,11 @@ public:
     // container for FDR
     std::vector< SomaticSite > totalSomaticSites;
 
-    // Open output files
     void iniOutput( const std::string &gavePrefix );
-    
-    // Print result summary
     void pourOutMsiScore();
-    
-    // Close output files
     void closeOutStream();
-    
-    // FDR computation
     void calculateFDR();
-    
-    // Output somatics && FDR
     void pourOutSomaticFDR();
-    
-    // Verbose results summary
     void VerboseInfo();
 
     protected:

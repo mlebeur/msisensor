@@ -31,7 +31,6 @@
 #include <cmath>
 #include "somatic.h"
 
-//Homopolymer instanciation
 SomaticSite::SomaticSite()
     : chr("")
     , length(0)
@@ -47,6 +46,7 @@ SomaticSite::SomaticSite()
 {
     //xxxxxxxx
 };
+
 
 SomaticSite::~SomaticSite() {
     // xxxxx

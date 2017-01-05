@@ -37,7 +37,7 @@
 #include <algorithm>
 #include <map>
 
-// User defined region
+// user defined region
 struct UserDefinedRegion {
     UserDefinedRegion()
         : chr("")
@@ -51,7 +51,7 @@ struct UserDefinedRegion {
     int end;
 };
 
-// Bed region 
+// bed region 
 struct BedRegion {
     BedRegion()
         : start(0)
@@ -63,7 +63,7 @@ struct BedRegion {
     int end;
 };
 
-// Bed regions located on one chromosome
+// bed regions located on one chromosome
 struct BedChr {
     BedChr()
         : chr("")
@@ -74,7 +74,7 @@ struct BedChr {
     std::vector< BedRegion > regions_list;
 };
 
-// Genotype for diploid
+// genotype by Kai
 struct Genotype {
     Genotype() {
         //xxx

@@ -51,7 +51,6 @@ std::string out_file;
 std::ifstream fin_d;
 std::ofstream fout;
 
-// Print usage for scan
 void ScanUsage(void) {
     std::cerr<<"\nUsage:  msisensor scan [options] \n\n"
         <<"       -d   <string>   reference genome sequences file, *.fasta format\n"
@@ -68,7 +67,6 @@ void ScanUsage(void) {
     exit(1);
 }
 
-//Instanciate arguments and return i
 int mGetOptions(int rgc, char *rgv[]) {
     int i;
     for (i=1; i<rgc; i++) {
@@ -90,7 +88,6 @@ int mGetOptions(int rgc, char *rgv[]) {
     return i;
 }
 
-//Main function for scan
 int HomoAndMicrosateScan(int argc, char *argv[]) {
     if (argc == 1) ScanUsage();
     for (int i=0; i<argc; i++) {
@@ -111,11 +108,9 @@ int HomoAndMicrosateScan(int argc, char *argv[]) {
         std::cerr <<"failed to open file: "<<out_file<< std::endl;
         exit(1);
     }
-    //writing header
     ref.PouroutHeader(fout);
     // reading refseq and count homo sites
     ref.ScanHomoAndMicrosate(fin_d);
-    // writing results
     ref.PouroutBuffer(fout);
     std::cout << "\nTotal time consumed:  " << Cal_AllTime() << " secs\n\n";
     fout.close();

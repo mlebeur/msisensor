@@ -40,7 +40,7 @@
 #include "bamreader.h"
 #include "sample.h"
 
-// A window is a genomic window countaining one or more homopolymer site
+// homopolymer site
 class Window {
 public:
     Window();
@@ -53,37 +53,16 @@ public:
     HomoSite *_startSite;
     HomoSite *_endSite;
 
-    //Initialize read count tables for each homopolymer of the genomic window
     void InitialDisW(); 
-    
-    //Print read count tables for each homopolymer of the genomic window
     void OutputDisW();
-    
-    //Release read count tables for each homopolymer of the genomic window
     void ClearDis();
-    
-    //Change window start
     void ChangeStart(); 
-    
-    //Compute read count tables for all reads in the window
     void GetDistribution(std::vector <SPLIT_READ> &readsInWindow);
-    
-    //Extract reads from bam
     void LoadReads(std::vector <SPLIT_READ> &readsInWindow, const std::string bam);
-    
-    //Scan the extracted reads to compute count tables
     void ScanReads(const std::vector <SPLIT_READ> &readsInWindow, unsigned short bamIndex, bool isTumor);
-    
-    // Reverse complement a sequence
     void ReverseComplement(std::string &theWord);
-    
-    //Compute count tables for 1 read
     unsigned short DoOneRead(const std::string &oneRead, const HomoSite *p);
-    
-    //Print read count tables for a sampling of homopolymer of the genomic window
     void PouroutDisW(Sample &oneSample);
-    
-    //Genotyping and printing read count tables for a sampling of homopolymer of the genomic window
     void DisGenotypingW(Sample &oneSample);
 
 protected:

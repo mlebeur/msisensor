@@ -35,13 +35,15 @@
 #include <fstream>
 #include <algorithm>
 
-// A somatic homopolymer site is an homopolymer site possibly somatic (bool somatic) having enough coverage in read count tables (for both Normal and Tumoral)
-// These homopolymers should be grouped for multiple test correction (FDR BH).
+// homopolymer site
 class SomaticSite {
 public:
     SomaticSite();
     ~SomaticSite();
 
+    // homo or microsate 
+    // A/C/G/T/AC/AGC
+    //
     std::string chr;
 
     // location
@@ -57,8 +59,8 @@ public:
     std::string fbases;
     // tail kmer
     std::string ebases;
-    
-    // difference between normal and tumor 
+    // difference between
+    // normal and tumor 
     double diff;
     double pValue;
     double FDR;
@@ -67,8 +69,8 @@ public:
     
     // output content
     void PourOut(); 
-    
     // sorting based on p-value
+    // 
     bool operator < (const SomaticSite& rhs) const { return pValue < rhs.pValue; }
 
     protected:

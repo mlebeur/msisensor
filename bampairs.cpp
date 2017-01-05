@@ -31,7 +31,6 @@
 
 #include "Bampairs.h"
 
-// Get back global parameter
 extern Param paramd;
 
 Bampairs::Bampairs() 

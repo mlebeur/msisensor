@@ -32,9 +32,9 @@
 #include "utilities.h"
 #include "refseq.h"
 
-// scanning     // Define default parameters
+// scanning
 extern Param param;
-// distribution // Define global parameters NOT USED
+// distribution 
 extern Param paramd;
 
 extern bit8_t alphabet[];
@@ -58,7 +58,7 @@ RefSeq::~RefSeq() {
    //*** 
 };
 
-// Print output header
+// output and clear buffer
 bool RefSeq::PouroutHeader(std::ofstream &fout) {
     fout << "chromosome"         <<"\t"
          << "location"           <<"\t"
@@ -72,7 +72,7 @@ bool RefSeq::PouroutHeader(std::ofstream &fout) {
          << "right_flank_bases"   <<"\n";
 }
 
-// Print output and clear buffer
+// output and clear buffer
 bool RefSeq::PouroutBuffer(std::ofstream &fout) {
     for (int i=0; i<homosBuffer.size(); i++) {
         fout << homosBuffer[i].chr       <<"\t"
@@ -89,7 +89,7 @@ bool RefSeq::PouroutBuffer(std::ofstream &fout) {
     homosBuffer.clear();
 }
 
-// Load next sequence
+// Load next chromosome
 ref_loc_t RefSeq::LoadNextSeq(std::ifstream &fin) {
     char c;
     char ch[1000];
@@ -121,22 +121,27 @@ ref_loc_t RefSeq::LoadNextSeq(std::ifstream &fin) {
     return _length;
 }
 
-// Instanciate one homo/microsate
-bit8_t RefSeq::LoadOneSite( const std::string & chr, const std::string & seq, int loc, bit8_t hLen, bit16_t type, bit16_t len, HomoSite & oneSite ) {
-    //Iterator on refrence sequence
+// load one homo/microsate
+bit8_t RefSeq::LoadOneSite( const std::string & chr, 
+                            const std::string & seq, 
+                            int loc, 
+                            bit8_t hLen, 
+                            bit16_t type, 
+                            bit16_t len, 
+                            HomoSite & oneSite ) {
     std::string::iterator h  = _seq.begin();
     std::string::iterator p0 = _seq.begin();
     std::string::iterator p1 = _seq.begin();
-    //Flanking regions
-    bit16_t flankH = 0; //Head binary sequence
-    bit16_t flankT = 0; //Tail binary sequence
-    int contextStart = loc - param.ContextLength; //Head int location
-    int contextStop  = loc + len*hLen + param.ContextLength; //Tail int location
+    // flank region
+    bit16_t flankH = 0;
+    bit16_t flankT = 0;
+    int contextStart = loc - param.ContextLength;
+    int contextStop  = loc + len*hLen + param.ContextLength;
     if ((contextStart < 0) || (contextStop >= _length)) return 0;
     for (unsigned char s=0; s<param.ContextLength; s++) {
         p0 = h+contextStart+s;
         p1 = h+loc+len*hLen+s;
-        if ((alphabet[*p0] == 4) || (alphabet[*p1] == 4)) { return 0; } //If N values in head and tail flanking region do not report this SSR
+        if ((alphabet[*p0] == 4) || (alphabet[*p1] == 4)) { return 0; }
         flankH<<=2;
         flankH|=alphabet[*p0];
         flankT<<=2;
@@ -153,7 +158,7 @@ bit8_t RefSeq::LoadOneSite( const std::string & chr, const std::string & seq, in
     return 1;
 }
 
-// testing sites binary function NOT USED
+// test sites binary
 void RefSeq::TestSitesBinary() {
     std::cout << "chromosome"   <<"\t"
               << "location"     <<"\t"
@@ -173,7 +178,7 @@ void RefSeq::TestSitesBinary() {
     }
 }
 
-// redable testing sites function (not binary) NOT USED
+// redable test
 void RefSeq::TestSites() {
     for (int i=0; i<homosBuffer.size(); i++) {
         homosBuffer[i].TransferString();
@@ -181,23 +186,22 @@ void RefSeq::TestSites() {
     }
 }
 
-// Scanning one reference sequence to find homopolymer/microsat
-void RefSeq::DoScan( int length, const std::string &name, unsigned int index ) {
-    //Iterator on refrence sequence
+// Scanning ref seqs
+void RefSeq::DoScan( int length, 
+                     const std::string &name,
+                     unsigned int index ) {
     std::string::iterator h   = _seq.begin();
     std::string::iterator p   = _seq.begin();
     std::string::iterator p0  = _seq.begin();
-    //Locations
     int location;
     int endLocation;
     int frontLocation;
     unsigned int endLength;
     unsigned int frontLength;
-    unsigned int tempChar = 0; //Last character found found
+    unsigned int tempChar = 0;
     unsigned int hitLength = 0;
     int i  = 0;
     int i0 = 0;
-    // For all reference sequence length
     while (i < _length) {
         tempChar = alphabet[*p];
         // filter 'N'
@@ -230,7 +234,7 @@ void RefSeq::DoScan( int length, const std::string &name, unsigned int index ) {
                   PouroutBuffer(fout);       
                 }
             }
-        } else {//For homopolymer with motif size greater than 1
+        } else {
             bool ifHit = false;
             bool ifN   = false;
             unsigned short  k = 2;
@@ -302,17 +306,16 @@ void RefSeq::DoScan( int length, const std::string &name, unsigned int index ) {
                 p = p0 + 1;
                 i = i0 + 1;
             }
-        }
+        } // end if
     }
 }
 
-// Scan homosites and windows foreach reference sequence
+// Scan homosites and windows
 void RefSeq::ScanHomoAndMicrosate(std::ifstream &fin) {
     _seq.resize(param.max_dbseq_size);
     total_num = sum_length = 0;
     unsigned int index = 0;
     _count = 0; 
-    //foreach sequence of the reference
     while (LoadNextSeq(fin)) {
         // filtering little reference sequences
         if (_length < 20 ) continue;

@@ -64,7 +64,6 @@ std::ofstream foutD;
 
 std::string one_region;
 
-//Print usage for msi analysis
 void DisUsage(void) {
     std::cerr<<"\nUsage:  msisensor msi [options] \n\n"
         <<"       -d   <string>   homopolymer and microsates file\n"
@@ -94,7 +93,6 @@ void DisUsage(void) {
     exit(1);
 }
 
-//Agument reading and return i
 int dGetOptions(int rgc, char *rgv[]) {
     int i;
     for (i=1; i<rgc; i++) {
@@ -126,7 +124,6 @@ int dGetOptions(int rgc, char *rgv[]) {
     return i;
 }
 
-//Main function for conduct msi analysis between normal and tumoral BAM
 int HomoAndMicrosateDisMsi(int argc, char *argv[]) {
     if (argc == 1) DisUsage();
     for (int i=0; i<argc; i++) {

@@ -30,26 +30,27 @@
 static time_t timeBegin;
 static time_t timeLast;
 
-//Return the begining time
 time_t Initial_Time() {    
     timeBegin = time(NULL);
     timeLast = timeBegin;
+
     return timeBegin;
 };
 
-//Return the time used during the past step
+//time used during the past step
 time_t Cal_StepTime() {
     time_t tused = time(NULL)-timeLast;
     timeLast = time(NULL);
+
     return tused;
 };
 
-//Return the total time exhaust
+//total time exhaust
 time_t Cal_AllTime() { 
     return time(NULL) - timeBegin;
 };
 
-//Return the current time on string format
+//current time on string format
 char * Curr_Time() { 
     time_t t=time(NULL); 
     return ctime(&t);

@@ -46,7 +46,6 @@ typedef unsigned long long bit64_t;
 typedef bit32_t ref_id_t;
 typedef bit32_t ref_loc_t;
 
-//Param defined the arguments
 class Param {
 public:
     Param();
